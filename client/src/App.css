@@ -1,0 +1,126 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #d6f6df;
+  color: #145214;
+}
+
+.app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.ima{
+  width: auto;
+  max-width: 600px;
+  height:300px ;
+}
+
+.subtitle {
+  position: relative;
+  bottom: 30px;
+}
+
+.upload-section{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 150px;
+  margin-left: 250px;
+}
+
+.container {
+  display: flex;
+  width: 80%;
+  max-width: 1100px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  border-right: 2px solid #e0f5e0;
+}
+
+.file-drop-zone {
+  width: 100%;
+  max-width: 350px;
+  height: 250px;
+  border: 3px dashed #2e7d32;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f6fff6;
+  font-size: 18px;
+  font-weight: bold;
+  color: #2e7d32;
+  cursor: pointer;
+  transition: 0.2s;
+  text-align: center;
+  padding: 20px;
+}
+
+.file-drop-zone:hover {
+  background: #e5f9e5;
+}
+
+.upload-btn {
+  margin-top: 20px;
+  padding: 12px 20px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.upload-btn:hover {
+  background: #256628;
+}
+
+.right {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+}
+
+.right h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+  color: #145214;
+}
+
+.right p {
+  font-size: 18px;
+  color: #2e7d32;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 90px;
+  margin-left: 100px;
+
+}
