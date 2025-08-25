@@ -9,18 +9,25 @@ app.post('/generate', async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'No text provided' });
 
-  // One-shot: give exactly ONE example before asking for new output.
-  const example = `Example:
-Text: "Photosynthesis converts light energy into chemical energy in plants."
-Output: 
-1) What is photosynthesis?
-2) Which type of energy is converted during photosynthesis?
-3) In which organisms does photosynthesis occur?`;
+  // Multi-shot: provide multiple example pairs before the task.
+  const examples = `
+Example 1
+Text: "The water cycle includes evaporation, condensation, and precipitation."
+Output:
+- What are the three main stages of the water cycle?
+- Which stage involves water vapor forming clouds?
 
-  const prompt = `${example}
+Example 2
+Text: "DNA carries genetic information using sequences of nucleotides."
+Output:
+- What molecule carries genetic information?
+- What are the building blocks of DNA called?
+`;
 
-Now generate 3 similar study questions from the following text:
-Text: "${text}"`;
+  const prompt = `${examples}
+
+Now, using the same style, write 4 questions from this text:
+"${text}"`;
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -29,4 +36,4 @@ Text: "${text}"`;
   } catch (e) { res.status(500).json({ error: e.message || 'Generation failed' }); }
 });
 
-app.listen(3101, () => console.log('One-shot server :3101'));
+app.listen(3102, () => console.log('Multi-shot server :3102'));
