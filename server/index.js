@@ -1,39 +1,109 @@
-const express = require('express');
-const cors = require('cors');
-const { GoogleGenAI } = require('@google/genai');
-require('dotenv').config();
+const express = require('express')
+const { GoogleGenAI } = require("@google/genai")
+const cors = require('cors')
+const multer = require('multer')
+const fs = require('fs')
+const pdfParse = require('pdf-parse')
+require('dotenv').config()
 
-const app = express(); app.use(cors()); app.use(express.json());
+const app = express()
+const PORT = process.env.PORT || 3000
 
-app.post('/generate', async (req, res) => {
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: 'No text provided' });
+app.use(cors())
+app.use(express.json())
 
-  // Multi-shot: provide multiple example pairs before the task.
-  const examples = `
-Example 1
-Text: "The water cycle includes evaporation, condensation, and precipitation."
-Output:
-- What are the three main stages of the water cycle?
-- Which stage involves water vapor forming clouds?
+const upload = multer({ dest: 'uploads/' })
 
-Example 2
-Text: "DNA carries genetic information using sequences of nucleotides."
-Output:
-- What molecule carries genetic information?
-- What are the building blocks of DNA called?
-`;
+// PDF Upload & Extraction
+app.post('/upload', upload.single('pdf'), async (req, res) => {
+  try {
+    const fileData = fs.readFileSync(req.file.path)
+    const parsed = await pdfParse(fileData)
+    fs.unlinkSync(req.file.path)
+    res.json({ text: parsed.text })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to process PDF' })
+  }
+})
 
-  const prompt = `${examples}
-
-Now, using the same style, write 4 questions from this text:
-"${text}"`;
+// Question + Answer Generation
+app.post('/generate-questions', async (req, res) => {
+  const { text, type } = req.body
+  if (!text) return res.status(400).json({ error: 'No text provided' })
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const out = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-    res.json({ result: out.text });
-  } catch (e) { res.status(500).json({ error: e.message || 'Generation failed' }); }
-});
+    let prompt = `You are a question generator. You MUST follow the exact format shown below. Do not add extra commentary, markdown, or symbols like **. Always provide BOTH questions AND answers.\n\nHere is the source text:\n---\n${text}\n---\n\n`
 
-app.listen(3102, () => console.log('Multi-shot server :3102'));
+    if (type === 'MCQ') {
+      prompt += `
+Return EXACTLY in this format (5 questions):
+
+1. <Question text>
+   a) <Option A>
+   b) <Option B>
+   c) <Option C>
+   d) <Option D>
+Answer: <a/b/c/d>
+
+2. <Question text>
+   a) <Option A>
+   b) <Option B>
+   c) <Option C>
+   d) <Option D>
+Answer: <a/b/c/d>`
+    } else if (type === 'True/False') {
+      prompt += `
+Return EXACTLY in this format (5 questions):
+
+1. Statement: <statement here>
+Answer: True
+
+2. Statement: <statement here>
+Answer: False
+
+3. Statement: <statement here>
+Answer: True`
+    } else {
+      // Subjective
+      prompt += `
+Return EXACTLY in this format (5 questions):
+
+1. Question: <subjective question here>
+Answer: <detailed answer here>
+
+2. Question: <subjective question here>
+Answer: <detailed answer here>
+
+3. Question: <subjective question here>
+Answer: <detailed answer here>
+
+(⚠️ Do not omit the 'Answer:' line. It must follow every question.)`
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+    const data = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        { role: "user", parts: [{ text: prompt }] }
+      ],
+      generationConfig: { temperature: 0.4 } // lower temp = stricter adherence
+    })
+
+    let output = data.response.candidates[0].content.parts[0].text || ''
+    output = output.replace(/\*\*/g, '').replace(/\*/g, '')
+
+    res.json({ qa: output })
+  } catch (err) {
+    console.error('Gemini API Error:', err)
+    res.status(500).json({ error: 'Failed to generate Q&A', details: err.message })
+  }
+})
+
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the PDF Processing & Question Generator API')
+})
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`)
+})
